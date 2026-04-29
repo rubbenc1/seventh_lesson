@@ -62,6 +62,13 @@ func StartMyMicroservice(ctx context.Context, listenAddr, ACLData string) error 
 	if err != nil {
 		return err
 	}
+
+	needClose := true
+	defer func() {
+		if needClose {
+			lis.Close()
+		}
+	}()
 	rules:=make(map[string][]string)
 	if err:=json.Unmarshal([]byte(ACLData),&rules); err!=nil {
 		return err
@@ -84,7 +91,8 @@ func StartMyMicroservice(ctx context.Context, listenAddr, ACLData string) error 
 	go func() {
 		<-ctx.Done()
 		server.GracefulStop()
+		lis.Close()
 	}()
-
+	needClose=false
 	return nil
 }
